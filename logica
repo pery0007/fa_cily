@@ -1,0 +1,203 @@
+
+# Modulo serve para cuidar da parte lógica
+# Bibliotecas
+from asyncio import windows_events, windows_utils
+import create
+import mysql.connector
+from PyQt5.QtWidgets import QMessageBox, QInputDialog
+from PyQt5 import QtWidgets
+import meu_forchamado, meu_relatorio
+import pandas as pd
+import os
+
+from meu_forchamado import Ui_Dialog, AppWindow
+from PyQt5.QtWidgets import QListWidget
+from PyQt5.QtWidgets import QMessageBox
+
+# Função para criar conexão com banco de dados
+def conexao():
+    try:                                    #Antes de criar o execultavel lembrar de alterar a password
+        conectar = mysql.connector.connect(user='root', password='', host='localhost', database='')
+        return conectar
+    except mysql.connector.Error as err:
+        print("Falha na conexão com banco de dados {}!".format(err))
+
+# Função para criar tabelas
+def create_table():
+    conn = conexao()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS tickets (
+                        numero_id INT AUTO_INCREMENT PRIMARY KEY,
+                        designacao VARCHAR(200) NOT NULL,
+                        nome_cliente VARCHAR(200) NOT NULL,
+                        anotacoes TEXT
+                    )''')
+                print("Tabela criada com sucesso!")
+            conn.commit()
+        except mysql.connector.Error as err:
+            print(f"Falha na criação da tabela: {err}")
+        finally:
+            conn.close()
+
+# Função para inserir dados no banco
+def inserir_dados(designacao, nome_cliente, anotacoes):
+    conn = conexao()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute('''
+                    INSERT INTO tickets (designacao, nome_cliente, anotacoes) 
+                    VALUES (%s, %s, %s)''', (designacao, nome_cliente, anotacoes))
+            conn.commit()
+            print("Dados inseridos com sucesso!")
+        except mysql.connector.Error as err:
+            print("Falha ao inserir dados: {}".format(err))
+        finally:
+            conn.close()
+
+# Função para ler dados do banco de dados e exibir na interface gráfica
+def ler_dados(window):
+    conn = conexao()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM tickets")
+                resultado = cursor.fetchall()
+
+                if resultado:
+                    # Transforma os resultados em uma lista formatada para exibição
+                    results = [f"ID: {resul[0]}, Designação: {resul[1]}, Cliente: {resul[2]}, Anotações: {resul[3]}" for resul in resultado]
+                    # Exibe os resultados na interface gráfica
+                    window.show_results(results)  # Ajuste aqui para usar window ao invés de ui
+                else:
+                    # Caso não haja resultados, exibe uma mensagem indicando isso
+                    window.show_results(["Nenhum resultado encontrado!"])  # Ajuste aqui para usar window ao invés de ui
+        except mysql.connector.Error as err:
+            print("Falha ao ler dados do banco de dados: {}".format(err))
+        finally:
+            conn.close()
+            
+def salvar_clicked_principal(window):
+    designacao = window.ui.lineEdit.text()
+    nome_cliente = window.ui.lineEdit_2.text()
+    anotacoes = window.ui.textEdit.toPlainText()
+
+    if designacao and nome_cliente:
+        create_table()
+        inserir_dados(designacao, nome_cliente, anotacoes)
+        QMessageBox.information(window, "Sucesso", "Dados salvos com sucesso!")
+
+        # Limpa os campos após salvar
+        window.ui.lineEdit.clear()
+        window.ui.lineEdit_2.clear()
+        window.ui.textEdit.clear()
+    else:
+        QMessageBox.warning(window, "Aviso", "Preencha os campos obrigatórios (Designação e Cliente).")
+
+# Função do botão localizar
+def localizar_click(window):
+    palavra_chave, ok = QInputDialog.getText(window, 'Localizar', 'Digite a palavra:')
+    
+    if ok:
+        print("Palavra-chave:", palavra_chave)
+
+        conn = conexao()
+        if conn:
+            try:
+                with conn.cursor() as cursor: # Comando SQL para localizar palavra-chave.
+                    consulta_sql = "SELECT * FROM tickets WHERE UPPER(designacao) LIKE UPPER(%s) OR UPPER(nome_cliente) LIKE UPPER(%s) OR UPPER(anotacoes) LIKE UPPER(%s)"
+                    cursor.execute(consulta_sql, ('%' + palavra_chave + '%', '%' + palavra_chave + '%', '%' + palavra_chave + '%'))
+
+                    resultado = cursor.fetchall()
+
+                    if resultado:
+                        results = [f"ID: {resul[0]}, Designação: {resul[1]}, Cliente: {resul[2]}, Anotações: {resul[3]}" for resul in resultado]
+                        window.show_results(results)
+                    else:
+                        window.show_results(["Nenhum resultado encontrado !"])
+            except mysql.connector.Error as err:
+                print("Falha ao localizar {}!".format(err))
+            finally:
+                conn.close()
+
+def atualizar_dados(id, designacao, nome_cliente, anotacoes):
+    conn = conexao()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE tickets 
+                    SET designacao = %s, nome_cliente = %s, anotacoes = %s 
+                    WHERE numero_id = %s""", (designacao, nome_cliente, anotacoes, id))
+            conn.commit()
+            print("Dados atualizados com sucesso!")
+        except mysql.connector.Error as err:
+            print(f"Falha ao atualizar dados: {err}")
+        finally:
+            conn.close()
+
+#Função para o clique sobre o item da lista
+def item_clicked(item_text, window):
+    selected_info = item_text.split(", ")
+    id = int(selected_info[0].split(": ")[1])
+    designacao = selected_info[1].split(": ")[1]
+    cliente = selected_info[2].split(": ")[1]
+    anotacoes = selected_info[3].split(": ")[1]
+
+# Preencher os campos da interface com as informações do item selecionado
+    window.ui.lineEdit.setText(designacao)
+    window.ui.lineEdit_2.setText(cliente)
+    window.ui.textEdit.setText(anotacoes)
+
+# Conectar o botão de salvar para atualizar os dados no banco de dados
+    def salvar_atualizações():
+        atualizar_dados(id, window.ui.lineEdit.text(), window.ui.lineEdit_2.text(), window.ui.textEdit.toPlainText())
+        QMessageBox.information(window, "Edição de Chamado", "Dados atualizados com sucesso!")
+
+    window.ui.pushButton.clicked.connect(salvar_atualizacao)
+
+    QMessageBox.information(window, "Edição de Chamado", "Você está editando o chamado selecionado. Faça as alterações desejadas e clique em 'Salvar'.")
+
+#Função para o botão CONVERTER, para quando gerar o relatorio ele ser ativado, 
+#Para poder converter o relatorio em tabelas de Excel, PDF, SQL, Power BI
+# Ainda sem implementação da lógica
+def convert_to_excel(df, file_name):
+    try:
+        df.to_excel(file_name, index=False)
+        print(f'Relatório convertido para Excel com sucesso: {file_name}')
+    except Exception as e:
+        print(f'Erro ao converter para Excel: {e}')
+
+def convert_to_pdf(text, file_name):
+    try:
+        with open(file_name, 'w') as f:
+            f.write(text)
+        print(f'Relatório convertido para PDF com sucesso: {file_name}')
+    except Exception as e:
+        print(f'Erro ao converter para PDF: {e}')
+
+def bot_converter(ui, format, resultado):
+    if resultado:
+        df = pd.DataFrame(resultado, columns=['ID', 'Designacao', 'Cliente', 'Anotacoes'])
+        if format == 'Excel':
+            ui.create.convert_to_excel(df, 'relatorio.xlsx')
+        elif format == 'PDF':
+            ui.create.convert_to_pdf(df.to_string(), 'relatorio.pdf')
+        elif format == 'SQL':
+            ui.create.export_to_sql(df, 'relatorio.sql')
+        elif format == 'Power BI':
+            ui.create.export_to_powerbi(df, 'relatorio.csv')
+        else:
+            print('Formato de exportação não suportado.')
+    else:
+        print('Nenhum resultado encontrado para converter.')
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    window = meu_forchamado.AppWindow()
+    window.show()
+    sys.exit(app.exec_())
