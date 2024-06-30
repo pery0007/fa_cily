@@ -1,0 +1,251 @@
+
+# Modulo resposavel pela Interface gráfica.
+# Bibliotecas
+from tkinter.tix import PopupMenu
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextBrowser
+from PyQt5.QtWidgets import QDialog, QInputDialog, QApplication
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QComboBox, QListWidget
+from PyQt5.QtWidgets import QLineEdit 
+from PyQt5.QtWidgets import QListWidget, QLabel
+from PyQt5.QtCore import Qt
+
+from PyQt5.QtWidgets import (QDialog, QGridLayout, QLabel, QLineEdit, QPushButton, QComboBox, QTextEdit, QTableView, QVBoxLayout)
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QDialog, QListWidget, QLabel, QLineEdit, QTextEdit, QComboBox
+
+import create
+import meu_forchamado
+
+class Ui_Dialog(QDialog):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(578, 422)
+        self.widget = QtWidgets.QWidget(Dialog)
+        self.widget.setGeometry(QtCore.QRect(10, 30, 551, 381))
+        self.widget.setObjectName("widget")
+        
+        # Layout vertical para os campos de "Designação" e "Cliente"
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        self.label_2 = QtWidgets.QLabel(self.widget)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setItalic(False)
+        font.setWeight(75)
+        self.label_2.setFont(font)
+        self.label_2.setObjectName("label_2")
+        self.verticalLayout.addWidget(self.label_2)
+        
+        self.lineEdit = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit.setObjectName("lineEdit")
+        self.verticalLayout.addWidget(self.lineEdit)
+
+        self.label_3 = QtWidgets.QLabel(self.widget)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_3.setFont(font)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout.addWidget(self.label_3)
+        
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.widget)
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.verticalLayout.addWidget(self.lineEdit_2)
+
+        # Layout de grade para as anotações
+        self.gridLayout = QtWidgets.QGridLayout()
+        self.gridLayout.setObjectName("gridLayout")
+
+        self.label_4 = QtWidgets.QLabel(self.widget)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_4.setFont(font)
+        self.label_4.setObjectName("label_4")
+        self.label_4.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_4.setStyleSheet("QLabel { text-align: center; }")
+        self.gridLayout.addWidget(self.label_4, 0, 0, 1, 4) 
+        
+        self.textEdit = QtWidgets.QTextEdit(self.widget)
+        self.textEdit.setObjectName("textEdit")
+        self.textEdit.setReadOnly(False)  # Definindo o campo de anotações como editável
+        self.gridLayout.addWidget(self.textEdit, 1, 0, 1, 4)
+        self.verticalLayout.addLayout(self.gridLayout)
+
+        # Layout horizontal para os botões
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+
+        self.pushButton_2 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.horizontalLayout.addWidget(self.pushButton_2)
+
+        self.pushButton = QtWidgets.QPushButton(self.widget)
+        self.pushButton.setObjectName("pushButton")
+        self.horizontalLayout.addWidget(self.pushButton)
+
+        self.pushButton_5 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_5.setObjectName("pushButton_5")
+        self.horizontalLayout.addWidget(self.pushButton_5)
+
+        self.pushButton_6 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.horizontalLayout.addWidget(self.pushButton_6)
+
+        self.pushButton_7 = QtWidgets.QPushButton(self.widget)
+        self.pushButton_7.setObjectName("pushButton_7")
+        self.horizontalLayout.addWidget(self.pushButton_7)
+
+        self.comboBox = QComboBox(self.widget)
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox.addItem("Excel")
+        self.comboBox.addItem("PDF")
+        self.comboBox.addItem("SQL")
+        self.comboBox.addItem("Power BI")
+        self.horizontalLayout.addWidget(self.comboBox)
+
+        self.verticalLayout.addLayout(self.horizontalLayout)
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        # Definir um sinal personalizado para indicar que um item da lista foi clicado
+        self.itemClicked = QtCore.pyqtSignal(str)
+
+    def carregar_dados(self):
+        # Limpar a lista de itens antes de carregar novos dados
+        self.listWidget.clear()
+
+        # Carregar dados do banco de dados e adicionar na QListWidget
+        resultado = create.ler_dados()
+        if resultado:
+            for resul in resultado:
+                item_text = f"ID: {resul[0]}, Designação: {resul[1]}, Cliente: {resul[2]}, Anotações: {resul[3]}"
+                self.listWidget.addItem(item_text)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Fa Cily"))
+        self.label_2.setText(_translate("Dialog", "DESIGNAÇÃO"))
+        self.label_3.setText(_translate("Dialog", "CLIENTE"))
+        self.label_4.setText(_translate("Dialog", "ANOTAÇÕES")) 
+        self.pushButton.setText(_translate("Dialog", "SALVAR"))
+        self.pushButton_2.setText(_translate("Dialog", "LOCALIZAR"))
+        self.pushButton_5.setText(_translate("Dialog", "RELATORIO"))
+        self.pushButton_6.setText(_translate("Dialog", "NOVO"))
+        self.pushButton_7.setText(_translate("Dialog", "CONVERTER"))
+
+class AppWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        self.setup_additional_ui()
+
+    def setup_additional_ui(self):
+        self.results = []
+
+        # Conectar os sinais aos slots
+        self.ui.pushButton.clicked.connect(lambda: create.salvar_clicked_principal(self))
+        self.ui.pushButton_2.clicked.connect(lambda: create.localizar_click(self))
+        self.ui.pushButton_6.clicked.connect(self.click_novo)
+        self.ui.pushButton_7.clicked.connect(lambda: create.bot_converter(self, self.ui.comboBox.currentText(), self.results))
+        self.ui.pushButton_5.clicked.connect(lambda: self.pop_up(self.ui.comboBox.currentText()))
+
+        # Conectar o sinal itemClicked da interface Ui_Dialog
+        #self.ui.itemClicked.connect(self.item_clicked)
+
+    def item_clicked(self, item_text):
+        selected_info = item_text.split(", ")
+        id = int(selected_info[0].split(": ")[1])
+        designacao = selected_info[1].split(": ")[1]
+        cliente = selected_info[2].split(": ")[1]
+        anotacoes = selected_info[3].split(": ")[1]
+
+        # Função para preencher os campos da interface com as informações do item selecionado
+        def preencher_campos():
+            self.ui.lineEdit.setText(designacao)
+            self.ui.lineEdit_2.setText(cliente)
+            self.ui.textEdit.setText(anotacoes)
+
+        # Verificar se há alterações nos campos antes de preencher
+        if (self.ui.lineEdit.text() != designacao or
+            self.ui.lineEdit_2.text() != cliente or
+            self.ui.textEdit.toPlainText() != anotacoes):
+            
+            # Confirmar se deseja salvar as alterações
+            reply = QMessageBox.question(self, 'Confirmação', 'Deseja salvar as alterações antes de continuar?', 
+                                         QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            
+            if reply == QMessageBox.Yes:
+                salvar_atualizacao()
+            elif reply == QMessageBox.Cancel:
+                return  # Cancela a operação se o usuário escolher Cancelar
+            # Se o usuário escolher Não, continua sem salvar as alterações
+
+        # Preencher os campos da interface com as informações do item selecionado
+        preencher_campos()
+
+        # Conectar o botão de salvar para atualizar os dados no banco de dados
+        def salvar_atualizacao():
+            atualizar_dados(id, self.ui.lineEdit.text(), self.ui.lineEdit_2.text(), self.ui.textEdit.toPlainText())
+            QMessageBox.information(self, "Edição de Chamado", "Dados atualizados com sucesso!")
+
+        self.ui.pushButton.clicked.connect(salvar_atualizacao)
+        QMessageBox.information(self, "Edição de Chamado", "Você está editando o chamado selecionado. Faça as alterações desejadas e clique em 'Salvar'.")
+
+    def display_selected(self, item_text):
+        # Extrair informações do texto do item selecionado
+        selected_info = item_text.split(", ")
+        designacao = selected_info[1].split(": ")[1]
+        cliente = selected_info[2].split(": ")[1]
+        anotacoes = selected_info[3].split(": ")[1]
+
+        # Preencher os campos da interface com as informações do item selecionado
+        self.ui.lineEdit.setText(designacao)
+        self.ui.lineEdit_2.setText(cliente)
+        self.ui.textEdit.setPlainText(anotacoes)
+
+    def show_results(self, results):
+        # Se houver resultados, oculta o label_4
+        if results:
+            self.ui.label_4.hide()
+        else:
+            self.ui.label_4.show()
+
+        # Limpa o conteúdo anterior do campo de anotações
+        self.ui.textEdit.clear()
+
+        # Exibe os resultados no campo de anotações e define a cor verde
+        self.ui.textEdit.setPlainText("\n".join(results))
+
+    def on_list_item_clicked(self, item):
+        # Obtém o texto do item clicado
+        clicked_text = item.text()
+
+        # Chama a função item_clicked() com o texto do item e a janela como argumentos
+        create.item_clicked(clicked_text, self)
+
+    def clear_fields(self):
+        # Limpar os campos da interface
+        self.ui.lineEdit.clear()
+        self.ui.lineEdit_2.clear()
+        self.ui.textEdit.clear()
+
+    def click_novo(self):
+        # Limpar os campos da interface
+        self.ui.lineEdit.clear()
+        self.ui.lineEdit_2.clear()
+        self.ui.textEdit.clear()
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    window = AppWindow()
+    window.show()
+    sys.exit(app.exec_())
